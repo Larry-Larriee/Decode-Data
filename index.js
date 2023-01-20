@@ -10,12 +10,15 @@ const uri = process.env.DATABASE_URI;
 // MAINSETUP
  
 class IATDATA{
-    constructor(database,collection){
+    constructor(collection, grade){
         // Use uri to connect to the database
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true }); // (Second Argument) = prevent any warnings we get from mongoDB
 
-        this.database = database; // ex. "IAT-Data"
-        this.collection = collection;  // ex. "Teacher"
+        this.grade = grade;
+
+        // Example. "Teacher" collection
+        this.database = "IAT-Data";
+        this.collection = collection;
     }
 
     // purgeData method removes everything from the specified collection
@@ -38,29 +41,30 @@ class IATDATA{
         }
     }
 
-    async reformatData(){
-    
-        try {
+    async getGrade(){
+        try{
             await this.client.connect();
-        
-            let db = this.client.db('IAT-Data');
-            let collection = db.collection(this.collection); 
     
-            const collectionData = await collection.find({}).toArray();
+            let db = this.client.db(this.database); 
+            let collection = db.collection(this.collection);
+    
+            const collectionData = await collection.find({"data.grade": this.grade}).toArray();
             console.log(collectionData);
         }
-        catch (err) {
+        catch (err){
             console.log("Ran into an error: " + err);
         }
-        finally {
+        finally{
             await this.client.close();
         }
     }
+
 }
 
 // =============================================================================================================================
 // MAINSETUP
 
-let iatData = new IATDATA('IAT-Data','Student');
+let iatTeacher = new IATDATA('Teacher',12);
+let iatStudent = new IATDATA('Student', 6);
 
-// iatData.purgeData();
+iatStudent.reformatData();
