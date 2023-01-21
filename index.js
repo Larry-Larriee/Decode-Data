@@ -9,8 +9,12 @@ const uri = process.env.DATABASE_URI;
 // =============================================================================================================================
 // MAINSETUP
  
+// The IATDATA class connects to mongoDB and allows us to interact with the database
+// Collection = the collection we want to interact with (Student or Teacher)
+// Grade = the grade we want to interact with (3-12)
+// Section = the section we want to interact with (1-8)
 class IATDATA{
-    constructor(collection, grade){
+    constructor(collection, grade=0, section=0){
         // Use uri to connect to the database
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true }); // (Second Argument) = prevent any warnings we get from mongoDB
 
@@ -21,8 +25,7 @@ class IATDATA{
         this.collection = collection;
     }
 
-    // purgeData method removes everything from the specified collection
-    // BE CAREFUL WITH THIS METHOD
+    // purgeData method removes everything from the specified collection {BE CAREFUL WITH THIS METHOD}
     async purgeData(){
         try{
             await this.client.connect();
@@ -41,6 +44,7 @@ class IATDATA{
         }
     }
 
+    // getGrade method returns all the data from the specified collection and grade
     async getGrade(){
         try{
             await this.client.connect();
@@ -67,4 +71,4 @@ class IATDATA{
 let iatTeacher = new IATDATA('Teacher',12);
 let iatStudent = new IATDATA('Student', 6);
 
-iatStudent.reformatData();
+// iatStudent.getGrade();
