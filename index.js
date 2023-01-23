@@ -6,6 +6,9 @@ require('dotenv').config();
 
 const uri = process.env.DATABASE_URI;
 
+// MongoDB Crash Course
+// https://www.youtube.com/watch?v=-56x56UppqQ
+
 // =============================================================================================================================
 // MAINSETUP
  
@@ -63,12 +66,37 @@ class IATDATA{
         }
     }
 
+    // correctness method returns the correctness of the grade given what their response was for the prompt
+    async queryCorrectness(){
+
+    }
+
+    // speed method returns the average speed of a grade and section of that grade
+    async querySpeed(){
+        try{
+            await this.client.connect();
+
+            let db = this.client.db(this.database); 
+            let collection = db.collection(this.collection);
+
+            
+            const dataArray = await collection.find({"data.grade": {$gte: this.grade}}).toArray();
+
+            console.log(dataArray[0].data);
+        }
+        catch (err){
+            console.log("Ran into an error: " + err);
+        }
+        finally{
+            await this.client.close();
+        }
+    }
 }
 
 // =============================================================================================================================
 // MAINSETUP
 
-let iatTeacher = new IATDATA('Teacher',12);
+let iatTeacher = new IATDATA('Teacher', 7, 3);
 let iatStudent = new IATDATA('Student', 6);
 
-// iatStudent.getGrade();
+iatTeacher.querySpeed();
