@@ -6,9 +6,6 @@ require('dotenv').config();
 
 const uri = process.env.DATABASE_URI;
 
-// MongoDB Crash Course
-// https://www.youtube.com/watch?v=-56x56UppqQ
-
 // =============================================================================================================================
 // MAINSETUP
  
@@ -22,6 +19,7 @@ class IATDATA{
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true }); // (Second Argument) = prevent any warnings we get from mongoDB
 
         this.grade = grade;
+        this.section = section;
 
         // Example. "Teacher" collection
         this.database = "IAT-Data";
@@ -71,18 +69,40 @@ class IATDATA{
 
     }
 
-    // speed method returns the average speed of a grade and section of that grade
+    // querySpeed returns the average time that a student or teacher takes to answer the prompt in the given section
+    // {this.grade} = the grade we want to query
+    // {this.section} = the section we want to query
     async querySpeed(){
         try{
             await this.client.connect();
-
-            let db = this.client.db(this.database); 
-            let collection = db.collection(this.collection);
-
-            
+            let collection = this.client.db(this.database).collection(this.collection);
             const dataArray = await collection.find({"data.grade": {$gte: this.grade}}).toArray();
 
-            console.log(dataArray[0].data);
+            // All times for the section will be stored in this array to find the mean 
+            const timeArray = [];
+
+            for (let i = 0; i < dataArray.length; i+= 1){
+                let userData = dataArray[i].data;
+                let userDataTimedIAT = userData.data;
+
+                console.log(userData.relationship, userData.grade, userData.classesAdvanced);
+                
+                for (let index = 0; index < userDataTimedIAT.length; index += 1){
+                    // console.log(userDataTimedIAT[index]);
+
+                    for (let j = 0; j < userDataTimedIAT[index].length; j += 1){
+                        // console.log(userDataTimedIAT[index][j], typeof userDataTimedIAT[index][j]);
+
+                        if (userDataTimedIAT[index][j] === this.section){
+                            timeArray.push(userDataTimedIAT[index][1]);
+                        }
+                    }
+                }
+            }
+
+            let timedMean = getMean(timeArray);
+            console.log(timeArray);
+            console.log(timedMean);
         }
         catch (err){
             console.log("Ran into an error: " + err);
@@ -93,10 +113,19 @@ class IATDATA{
     }
 }
 
+function getMean(array){
+    let sum = 0;
+
+    for (let i = 0; i < array.length; i += 1){
+        sum += array[i];
+    }
+    return sum / array.length;
+}
+
 // =============================================================================================================================
 // MAINSETUP
 
-let iatTeacher = new IATDATA('Teacher', 7, 3);
-let iatStudent = new IATDATA('Student', 6);
+let iatTeacher = new IATDATA('Teacher', 7, 1);
+let iatStudent = new IATDATA('Student', 10, 5);
 
-iatTeacher.querySpeed();
+iatStudent.querySpeed();
