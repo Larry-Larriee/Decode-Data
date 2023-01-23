@@ -45,25 +45,6 @@ class IATDATA{
         }
     }
 
-    // getGrade method returns all the data from the specified collection and grade
-    async getGrade(){
-        try{
-            await this.client.connect();
-    
-            let db = this.client.db(this.database); 
-            let collection = db.collection(this.collection);
-    
-            const collectionData = await collection.find({"data.grade": this.grade}).toArray();
-            console.log(collectionData);
-        }
-        catch (err){
-            console.log("Ran into an error: " + err);
-        }
-        finally{
-            await this.client.close();
-        }
-    }
-
     // correctness method returns the correctness of the grade given what their response was for the prompt
     async queryCorrectness(){
 
@@ -76,7 +57,7 @@ class IATDATA{
         try{
             await this.client.connect();
             let collection = this.client.db(this.database).collection(this.collection);
-            const dataArray = await collection.find({"data.grade": {$gte: this.grade}}).toArray();
+            const dataArray = await collection.find({"data.grade": this.grade}).toArray();
 
             // All times for the section will be stored in this array to find the mean 
             const timeArray = [];
