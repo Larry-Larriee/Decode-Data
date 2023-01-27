@@ -92,6 +92,32 @@ class IATDATA{
             await this.client.close();
         }
     }
+
+    // check if a certain grade exists. If it does, return all the grades that exist
+    async queryByGrades(){
+
+        try{
+            await this.client.connect();
+            let collection = this.client.db(this.database).collection(this.collection);
+            
+            const dataArray = await collection.find({}).toArray();
+            // console.log(dataArray);
+
+            let gradeLevels = [];
+            for (let i = 0; i < dataArray.length; i += 1){
+                let grade = dataArray[i].data.grade;
+                gradeLevels.push(dataArray[i].data.grade);
+            }
+
+            console.log(`${this.collection} grade levels: ${removeRepititions(gradeLevels)}`);
+        }
+        catch (err){
+            console.log("Ran into an error: " + err);
+        }
+        finally{
+            await this.client.close();
+        }
+    }
 }
 
 function getMean(array){
@@ -103,10 +129,30 @@ function getMean(array){
     return sum / array.length;
 }
 
+function removeRepititions(array){
+    let returnArray = [];
+
+    array.forEach((element) => {
+        if (!returnArray.includes(element)){
+            returnArray.push(element);
+        }
+    });
+
+    return returnArray;
+}
+
 // =============================================================================================================================
 // MAINSETUP
+
+const studentList = {};
+const teacherList = {};
 
 let iatTeacher = new IATDATA('Teacher', 7, 1);
 let iatStudent = new IATDATA('Student', 10, 5);
 
-iatStudent.querySpeed();
+iatTeacher.queryByGrades();
+
+// =============================================================================================================================
+
+// To Do: get the mean of each grade and base it on section (odd sections are positive and even sections are negative)
+// Do this for both students and teachers
