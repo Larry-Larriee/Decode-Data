@@ -45,9 +45,73 @@ class IATDATA{
         }
     }
 
-    // correctness method returns the correctness of the grade given what their response was for the prompt
+    // Return the _id of the user that has more than half of their responses incorrect
+    // we can look inside blacklisted id's through 
+    // collection.find({"_id": {$in: blackListById}}).toArray() where blackListById is an array of _id's
     async queryCorrectness(){
+        const blackListById = [];
 
+        try{
+            await this.client.connect(); 
+            let db = this.client.db(this.database);
+            let collection = db.collection(this.collection);
+
+            const iatAnalysis = {
+                response: {
+                    e: false,
+                    i: true
+                },
+                prompt: {
+                    teacher: {
+                        positiveTerms: ["Motivated", "Studious", "Competent", "Collaborative"],
+                        negativeTerms: ["Disruptive", "Lazy", "Cheaters", "Irresponsible"]
+                    },
+                    student: {
+                        positiveTerms: ["Joyful", "Happy", "Content", "Cheerful"],
+                        negativeTerms: ["Miserable", "Sad", "Gloomy", "Depressed"]
+                    }
+                }
+            }
+
+            const dataArray = await collection.find({}).toArray();
+
+            // Get teacher or student prompt using relationship
+            const relationship = iatAnalysis.prompt[(this.collection).toLowerCase()];
+
+            // Loop through all users
+            for (let i = 0; i < dataArray.length; i += 1){
+                let userId = dataArray[i]._id;
+                let userCorrectness = 0;
+
+                // Loop through individual user test data
+                for (let j = 0; j < dataArray[i].data.data.length; j += 1){
+                    
+                    if (relationship.positiveTerms.includes(dataArray[i].data.data[j][3])){
+                        if (!(dataArray[i].data.data[j][4] === "e")){
+                            userCorrectness -= 1;
+
+                            // if the user has more than 32 questions incorrect, add them to the blacklist
+                            if (userCorrectness < -30){
+                                blackListById.push(userId);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // console.log(blackListById);
+        }  
+        catch (err){
+            console.log("Ran into an error: " + err);
+        }
+        finally{
+            this.client.close();
+        }
+
+        return new Promise((resolve) => {
+            resolve(blackListById);
+        });
     }
 
     // querySpeed returns the average time that a student or teacher takes to answer the prompt in the given section
@@ -141,16 +205,28 @@ function removeRepititions(array){
     return returnArray;
 }
 
+// this function is need to get the blackListById array due to the asynchronous nature of the queryCorrectness function
+// reassigns blackList to the set of _id's that are blacklisted
+async function fetchCorrectness(objectName){
+    blackList = await objectName.queryCorrectness();
+
+    console.log(blackList);
+}
+
 // =============================================================================================================================
 // MAINSETUP
 
-const studentList = {};
-const teacherList = {};
+let blackList = [];
 
 let iatTeacher = new IATDATA('Teacher', 7, 1);
 let iatStudent = new IATDATA('Student', 10, 5);
 
-iatTeacher.queryByGrades();
+fetchCorrectness(iatTeacher);
+
+// if I were to console log fetchCorrectness(iatTeacher) here, I would be getting it instantaneously instead of awaiting 
+// the queryCorrectness function to finish
+
+// console.log(blackList);
 
 // =============================================================================================================================
 
